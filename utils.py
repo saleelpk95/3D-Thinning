@@ -1,0 +1,143 @@
+import numpy as np
+
+class Utils():
+	
+	def __init__(self):
+		self.supportVectorList = [[1,1,1], [-1,1,1], [-1,-1,1], [1,-1,1], [1,1,-1], [-1,1,-1], [-1,-1,-1], [1,-1,-1],]
+
+	# Given a list of centres as list, generate the vertices for all the voxels.
+	def generateVerticesForCentres(self, voxelCentreList, edgeLength):
+
+		vertexListForAllCentres = []
+
+		for centre in voxelCentreList:
+		
+			vertexListForOneCentre = []
+			c = np.array(centre)
+			
+			for supportVector in self.supportVectorList:
+		
+				s = np.array(supportVector)
+				singleVertexArray = c + (edgeLength/2.0)*s
+				singleVertexList = singleVertexArray.tolist()
+				vertexListForOneCentre.append(singleVertexList)
+
+			vertexListForAllCentres.append(vertexListForOneCentre)
+
+		print vertexListForAllCentres
+
+	def findAllAdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+
+		listOf2AdjacentVoxels = self.findAll2AdjacentVoxels(centre, voxelCentreList, edgeLength)
+		listOf1AdjacentVoxels = self.findAll1AdjacentVoxels(centre, voxelCentreList, edgeLength)
+		listOf0AdjacentVoxels = self.findAll0AdjacentVoxels(centre, voxelCentreList, edgeLength)
+
+		return [listOf2AdjacentVoxels, listOf1AdjacentVoxels, listOf0AdjacentVoxels]
+
+	# Find all the voxels centres that are 2-adjacent to the the given voxel.
+	def findAll2AdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+
+		# Remove the voxel for whom the neighbours needs to be found, from the complex.
+		try:
+			voxelCentreList.remove(centre)
+		except:
+			pass
+
+		listOf2AdjacentVoxels = []
+
+		for voxelCentre in voxelCentreList:
+			if self.is2Adjacent(centre, voxelCentre, edgeLength):
+				listOf2AdjacentVoxels.append(voxelCentre)
+
+		return listOf2AdjacentVoxels
+
+	# Find all the voxels centres that are 1-adjacent to the the given voxel.
+	def findAll1AdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+
+		# Remove the voxel for whom the neighbours needs to be found, from the complex.
+		try:
+			voxelCentreList.remove(centre)
+		except:
+			pass
+
+		listOf1AdjacentVoxels = []
+
+		for voxelCentre in voxelCentreList:
+			if self.is1Adjacent(centre, voxelCentre, edgeLength):
+				listOf1AdjacentVoxels.append(voxelCentre)
+
+		return listOf1AdjacentVoxels
+			
+	# Find all the voxels centres that are 2-adjacent to the the given voxel.
+	def findAll0AdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+
+		# Remove the voxel for whom the neighbours needs to be found, from the complex.
+		try:
+			voxelCentreList.remove(centre)
+		except:
+			pass
+
+		listOf0AdjacentVoxels = []
+
+		for voxelCentre in voxelCentreList:
+			if self.is0Adjacent(centre, voxelCentre, edgeLength):
+				listOf0AdjacentVoxels.append(voxelCentre)
+
+		return listOf0AdjacentVoxels
+
+	# Given two voxel centres, find if they are 2-adjacent or not.
+	def is2Adjacent(self, centre1, centre2, edgeLength):
+
+		c1 = np.array(centre1)
+		c2 = np.array(centre2)
+
+		distanceBetweenCentres = np.linalg.norm(c1-c2)
+
+		if self.isClose(edgeLength, distanceBetweenCentres):
+			return True
+
+		return False
+
+	# Given two voxel centres, find if they are 1-adjacent or not.
+	def is1Adjacent(self, centre1, centre2, edgeLength):
+
+		c1 = np.array(centre1)
+		c2 = np.array(centre2)
+
+		distanceBetweenCentres = np.linalg.norm(c1-c2)
+		
+		centreToEdge = self.centreToEdgeDistance(edgeLength)
+		
+		if self.isClose(centreToEdge, distanceBetweenCentres/2.0):
+			return True
+
+		return False
+
+	# Given two voxel centres, find if they are 0-adjacent or not.
+	def is0Adjacent(self, centre1, centre2, edgeLength):
+
+		c1 = np.array(centre1)
+		c2 = np.array(centre2)
+
+		distanceBetweenCentres = np.linalg.norm(c1-c2)
+
+		centreToCorner = self.centreToCornerDistance(edgeLength)
+
+		if self.isClose(centreToCorner, distanceBetweenCentres/2.0):
+			return True
+
+		return False
+
+	# Given the edge length of a voxel, calculate the shortest distance from the centre of a voxel to the edge.
+	def centreToEdgeDistance(self, edgeLength):
+
+		return edgeLength/np.sqrt(2.0)
+
+	# Given the edge length of a voxel, calculate the distance from the centre of a voxel to a corner.
+	def centreToCornerDistance(self, edgeLength):
+		
+		return (edgeLength/2.0)*np.sqrt(3.0)
+
+	# Compare two floating point numbers for almost-equality
+	def isClose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
+		return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
