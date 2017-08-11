@@ -5,7 +5,7 @@ class Utils():
 	def __init__(self):
 		self.supportVectorList = [[1,1,1], [-1,1,1], [-1,-1,1], [1,-1,1], [1,1,-1], [-1,1,-1], [-1,-1,-1], [1,-1,-1],]
 
-	# Given a list of centres as list, generate the vertices for all the voxels.
+	# Given a list of centres as tuples, generate the vertices for all the voxels.
 	def generateVerticesForCentres(self, voxelCentreList, edgeLength):
 
 		vertexListForAllCentres = []
@@ -19,23 +19,47 @@ class Utils():
 		
 				s = np.array(supportVector)
 				singleVertexArray = c + (edgeLength/2.0)*s
-				singleVertexList = singleVertexArray.tolist()
+				singleVertexList = tuple(singleVertexArray)
 				vertexListForOneCentre.append(singleVertexList)
 
 			vertexListForAllCentres.append(vertexListForOneCentre)
 
 		print vertexListForAllCentres
 
-	def findAllAdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+	def findKStarForClique(self, cliqueVoxelCentreList, voxelCentreList, edgeLength):
+		kStar = []
+		flag = True
+		for centre in cliqueVoxelCentreList:
+			voxelListForComparison = []
+			adjacentVoxels = self.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
+			
+			if flag:
+				flag = False
+				for voxelList in adjacentVoxels:
+					kStar += voxelList
+			else:
+				for voxelList in adjacentVoxels:
+					voxelListForComparison += voxelList
+				kStar = list(set(kStar).intersection(voxelListForComparison))
 
-		listOf2AdjacentVoxels = self.findAll2AdjacentVoxels(centre, voxelCentreList, edgeLength)
-		listOf1AdjacentVoxels = self.findAll1AdjacentVoxels(centre, voxelCentreList, edgeLength)
-		listOf0AdjacentVoxels = self.findAll0AdjacentVoxels(centre, voxelCentreList, edgeLength)
+		for centre in cliqueVoxelCentreList:
+			try:
+				kStar.remove(centre)
+			except:
+				pass
+
+		return kStar
+
+	def findAllAdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
+
+		listOf2AdjacentVoxels = self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
+		listOf1AdjacentVoxels = self.findAll1AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
+		listOf0AdjacentVoxels = self.findAll0AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
 
 		return [listOf2AdjacentVoxels, listOf1AdjacentVoxels, listOf0AdjacentVoxels]
 
 	# Find all the voxels centres that are 2-adjacent to the the given voxel.
-	def findAll2AdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+	def findAll2AdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
 		# Remove the voxel for whom the neighbours needs to be found, from the complex.
 		try:
@@ -52,7 +76,7 @@ class Utils():
 		return listOf2AdjacentVoxels
 
 	# Find all the voxels centres that are 1-adjacent to the the given voxel.
-	def findAll1AdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+	def findAll1AdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
 		# Remove the voxel for whom the neighbours needs to be found, from the complex.
 		try:
@@ -69,7 +93,7 @@ class Utils():
 		return listOf1AdjacentVoxels
 			
 	# Find all the voxels centres that are 2-adjacent to the the given voxel.
-	def findAll0AdjacentVoxels(self, centre, voxelCentreList, edgeLength):
+	def findAll0AdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
 		# Remove the voxel for whom the neighbours needs to be found, from the complex.
 		try:
@@ -137,6 +161,15 @@ class Utils():
 	def centreToCornerDistance(self, edgeLength):
 		
 		return (edgeLength/2.0)*np.sqrt(3.0)
+
+	# Check if the given complex is connected or not
+	def isConnected(self, voxelCentreList, edgeLength):
+
+		for centre in voxelCentreList:
+			if self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll1AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll0AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[]:
+				return False
+
+		return True
 
 	# Compare two floating point numbers for almost-equality
 	def isClose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
