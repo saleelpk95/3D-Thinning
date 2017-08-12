@@ -26,6 +26,12 @@ class Utils():
 
 		print vertexListForAllCentres
 
+	def findAllCliquesForComplex(self, voxelCentreList, edgeLength):
+		powerSet = self.generatePowerSet(voxelCentreList)
+		powerSet.remove([])
+		cliqueList = [clique for clique in powerSet if self.isConnected(clique, edgeLength)]
+		return cliqueList
+
 	def findKStarForClique(self, cliqueVoxelCentreList, voxelCentreList, edgeLength):
 		kStar = []
 		flag = True
@@ -61,9 +67,11 @@ class Utils():
 	# Find all the voxels centres that are 2-adjacent to the the given voxel.
 	def findAll2AdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
+		flag = False
 		# Remove the voxel for whom the neighbours needs to be found, from the complex.
 		try:
 			voxelCentreList.remove(centre)
+			flag = True
 		except:
 			pass
 
@@ -72,15 +80,18 @@ class Utils():
 		for voxelCentre in voxelCentreList:
 			if self.is2Adjacent(centre, voxelCentre, edgeLength):
 				listOf2AdjacentVoxels.append(voxelCentre)
-
+		if flag:
+			voxelCentreList.append(centre)
 		return listOf2AdjacentVoxels
 
 	# Find all the voxels centres that are 1-adjacent to the the given voxel.
 	def findAll1AdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
+		flag = False
 		# Remove the voxel for whom the neighbours needs to be found, from the complex.
 		try:
 			voxelCentreList.remove(centre)
+			flag = True
 		except:
 			pass
 
@@ -90,14 +101,19 @@ class Utils():
 			if self.is1Adjacent(centre, voxelCentre, edgeLength):
 				listOf1AdjacentVoxels.append(voxelCentre)
 
+		if flag:
+			voxelCentreList.append(centre)
+
 		return listOf1AdjacentVoxels
 			
 	# Find all the voxels centres that are 2-adjacent to the the given voxel.
 	def findAll0AdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
+		flag = False
 		# Remove the voxel for whom the neighbours needs to be found, from the complex.
 		try:
 			voxelCentreList.remove(centre)
+			flag = True
 		except:
 			pass
 
@@ -106,6 +122,9 @@ class Utils():
 		for voxelCentre in voxelCentreList:
 			if self.is0Adjacent(centre, voxelCentre, edgeLength):
 				listOf0AdjacentVoxels.append(voxelCentre)
+
+		if flag:
+			voxelCentreList.append(centre)
 
 		return listOf0AdjacentVoxels
 
@@ -164,12 +183,16 @@ class Utils():
 
 	# Check if the given complex is connected or not
 	def isConnected(self, voxelCentreList, edgeLength):
+		if len(voxelCentreList) == 1:
+			return True
 
 		for centre in voxelCentreList:
 			if self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll1AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll0AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[]:
 				return False
-
 		return True
+
+	def generatePowerSet(self, lst):
+		return reduce(lambda result, x: result + [subset + [x] for subset in result], lst, [[]])
 
 	# Compare two floating point numbers for almost-equality
 	def isClose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
