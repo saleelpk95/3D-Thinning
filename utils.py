@@ -26,13 +26,92 @@ class Utils():
 
 		print vertexListForAllCentres
 
-	def findAllCliquesForComplex(self, voxelCentreList, edgeLength):
-		powerSet = self.generatePowerSet(voxelCentreList)
-		powerSet.remove([])
-		cliqueList = [clique for clique in powerSet if self.isConnected(clique, edgeLength)]
-		return cliqueList
+	# def findAllCliquesForComplex(self, voxelCentreList, edgeLength):
+	# 	powerSet = self.generatePowerSet(voxelCentreList)
+	# 	powerSet.remove([])
+	# 	cliqueList = [clique for clique in powerSet if self.isConnected(clique, edgeLength)]
+	# 	return cliqueList
 
-	def findKStarForClique(self, cliqueVoxelCentreList, voxelCentreList, edgeLength):
+	def isCritical(self, cliqueVoxelCentreList, voxelCentreList):
+		isRegular = self.isReducible(self.findKStarForClique(cliqueVoxelCentreList, voxelCentreList))
+		if not isRegular:
+			return True
+		return False
+
+	def isReducible(self, voxelCentreList):
+		if len(voxelCentreList) == 1:
+			return True
+		for voxel in voxelCentreList:
+			temp = list(voxelCentreList)
+			return self.isReducible(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)) and self.isReducible(temp.remove(voxel))
+
+	def getKCriticalCliques(voxelCentreList, k):
+		essentialCliques = self.findEssentialCliquesForComplex(voxelCentreList)
+		if k == 1:
+			k_critical_cliques = essentialCliques
+		if k == 2:
+			k_critical_cliques = essentialCliques
+		if k == 3:
+			k_critical_cliques = essentialCliques
+		return k_critical_cliques
+
+	def findCriticalCliques(self, voxelCentreList):
+		essentialCliques = self.findEssentialCliquesForComplex(voxelCentreList)
+		zero_cliques = list(essentialCliques[0])
+		one_cliques = list(essentialCliques[1])
+		two_cliques = list(essentialCliques[2])
+		for clique in zero_cliques:
+			if not self.isCritical(clique, voxelCentreList):
+				zero_cliques.remove(clique)
+		for clique in one_cliques:
+			if not self.isCritical(clique, voxelCentreList):
+				one_cliques.remove(clique)
+		for clique in two_cliques:
+			if not self.isCritical(clique, voxelCentreList):
+				two_cliques.remove(clique)
+		essentialCliques['two_cliques'] = two_cliques
+		essentialCliques['one_cliques'] = one_cliques
+		essentialCliques['zero_cliques'] = zero_cliques
+
+		return essentialCliques
+
+	def findEssentialCliquesForComplex(self, voxelCentreList):
+
+		# contains the cliques according to d-values
+		final_dict = {}
+		zero_cliques = []
+		one_cliques = []
+		two_cliques = []		
+		three_cliques = []
+		for centre in voxelCentreList:
+			# add voxel as it is three clique
+			list(set(three_cliques).union(set([centre])))
+			
+			# check for two cliques
+			for mask in self.maskFor2clique(centre):
+				common = list(set(mask).intersection(set(voxelCentreList)))
+				if len(common)==2:
+					list(set(two_cliques).union(set(common)))
+
+			# check for one cliques
+			for mask in self.maskFor1clique(centre):
+				common = list(set(mask).intersection(set(voxelCentreList)))
+				if len(common)>2:
+					list(set(one_cliques).union(set(common)))
+
+			# check for zero cliques
+			for mask in self.maskFor0clique(centre):
+				common = list(set(mask).intersection(set(voxelCentreList)))
+				if len(common)>4:
+					list(set(zero_cliques).union(set(common)))
+		final_dict['three_cliques'] = three_cliques
+		final_dict['two_cliques'] = two_cliques
+		final_dict['one_cliques'] = one_cliques
+		final_dict['zero_cliques'] = zero_cliques
+		
+		return final_dict
+
+	def findKStarForClique(self, cliqueVoxelCentreList, voxelCentreList, edgeLength = 1):
 		kStar = []
 		flag = True
 		for centre in cliqueVoxelCentreList:
@@ -56,6 +135,198 @@ class Utils():
 
 		return kStar
 
+	def maskFor2clique(self, centre):
+		mask = []
+		temp = list(centre)
+		# do x coordiinate +- 1
+		temp[0] += 1
+		mask.append([tuple(temp),centre])
+		temp = list(centre)
+		temp[0] -= 1
+		mask.append([tuple(temp),centre])
+		temp = list(centre)
+		temp[1] += 1
+		mask.append([tuple(temp),centre])
+		temp = list(centre)
+		temp[1] -= 1
+		mask.append([tuple(temp),centre])
+		temp = list(centre)
+		temp[2] += 1
+		mask.append([tuple(temp),centre])
+		temp = list(centre)
+		temp[2] -= 1
+		mask.append([tuple(temp),centre])
+
+		return mask
+
+	def maskFor1clique(self, centre):
+		mask = []
+
+		for i in range(1,7):
+			# for x
+			if i==1:
+				temp = list(centre)
+				tempxplus = list(centre)
+				tempxplus[0] += 1
+				temp_up = temp
+				tempxplus_up = tempxplus
+				temp_up[1] += 1
+				tempxplus_up[1] += 1
+				temp_down = temp
+				tempxplus_down = tempxplus
+				temp_down[1] -= 1
+				tempxplus_down[1] -= 1
+				mask.append([tuple(temp),tuple(tempxplus),tuple(temp_up),tuple(tempxplus_up)])
+				mask.append([tuple(temp),tuple(tempxplus),tuple(temp_down),tuple(tempxplus_down)])
+			elif i==2:
+				temp = list(centre)
+				tempxminus = list(centre)
+				tempxminus[0] -= 1
+				temp_up = temp
+				tempxminus_up = tempxminus
+				temp_up[1] += 1
+				tempxminus_up[1] += 1
+				temp_down = temp
+				tempxminus_down = tempxminus
+				temp_down[1] -= 1
+				tempxminus_down[1] -= 1
+				mask.append([tuple(temp),tuple(tempxminus),tuple(temp_up),tuple(tempxminus_up)])
+				mask.append([tuple(temp),tuple(tempxminus),tuple(temp_down),tuple(tempxminus_down)])
+
+			# for y
+			elif i==3:
+				temp = list(centre)
+				tempyplus = list(centre)
+				tempyplus[1] += 1
+				temp_front = temp
+				tempyplus_front = tempyplus
+				temp_front[2] += 1
+				tempyplus_front[2] += 1
+				temp_down = temp
+				tempyplus_back = tempyplus
+				temp_back[2] -= 1
+				tempyplus_back[2] -= 1
+				mask.append([tuple(temp),tuple(tempyplus),tuple(temp_front),tuple(tempyplus_front)])
+				mask.append([tuple(temp),tuple(tempyplus),tuple(temp_back),tuple(tempyplus_back)])
+			elif i==4:
+				temp = list(centre)
+				tempyminus = list(centre)
+				tempyminus[1] -= 1
+				temp_front = temp
+				tempyminus_front = tempyminus
+				temp_front[2] += 1
+				tempyminus_front[2] += 1
+				temp_back = temp
+				tempyminus_back = tempyminus
+				temp_back[2] -= 1
+				tempyminus_back[2] -= 1
+				mask.append([tuple(temp),tuple(tempyminus),tuple(temp_front),tuple(tempyminus_front)])
+				mask.append([tuple(temp),tuple(tempyminus),tuple(temp_back),tuple(tempyminus_back)])
+
+			# for z
+			elif i==5:
+				temp = list(centre)
+				tempzplus = list(centre)
+				tempzplus[2] += 1
+				temp_up = temp
+				tempzplus_up = tempzplus
+				temp_up[1] += 1
+				tempzplus_up[1] += 1
+				temp_down = temp
+				tempzplus_down = tempzplus
+				temp_down[1] -= 1
+				tempzplus_down[1] -= 1
+				mask.append([tuple(temp),tuple(tempzplus),tuple(temp_up),tuple(tempzplus_up)])
+				mask.append([tuple(temp),tuple(tempzplus),tuple(temp_down),tuple(tempzplus_down)])
+			elif i==6:
+				temp = list(centre)
+				tempzminus = list(centre)
+				tempzminus[2] -= 1
+				temp_up = temp
+				tempzminus_up = tempzminus
+				temp_up[1] += 1
+				tempzminus_up[1] += 1
+				temp_down = temp
+				tempzminus_down = tempzminus
+				temp_down[1] -= 1
+				tempzminus_down[1] -= 1
+				mask.append([tuple(temp),tuple(tempzminus),tuple(temp_up),tuple(tempzminus_up)])
+				mask.append([tuple(temp),tuple(tempzminus),tuple(temp_down),tuple(tempzminus_down)])
+
+		return mask
+
+	def maskFor0clique(self,centre):
+		mask = []
+		temp = list(centre)
+		tempxplus = list(centre)
+		tempxplus[0] += 1
+		tempxminus = list(centre)
+		tempxminus[0] -= 1
+		temp_front = temp
+		temp_back = temp
+		temp_front[2] += 1
+		temp_back[2] -= 1
+		temp_front_up = temp_front
+		temp_back_up = temp_back
+		temp_front_down = temp_front
+		temp_back_down = temp_back
+		temp_front_up[1] += 1
+		temp_back_up[1] += 1
+		temp_front_down[1] -= 1
+		temp_back_down[1] -= 1
+		tempxplus_front = tempxplus
+		tempxplus_back = tempxplus
+		tempxminus_front = tempxminus
+		tempxminus_back = tempxminus
+		tempxplus_front[2] += 1
+		tempxplus_back[2] -= 1
+		tempxminus_front[2] += 1
+		tempxminus_back[2] -= 1
+		temp_up = temp
+		tempxplus_up = tempxplus
+		tempxminus_up = tempxminus
+		tempxplus_front_up = tempxplus_front
+		tempxplus_back_up = tempxplus_back
+		tempxminus_front_up = tempxminus_front
+		tempxminus_back_up = tempxminus_back
+		temp_up[1] += 1
+		tempxplus_up[1] += 1
+		tempxminus_up[1] += 1
+		tempxplus_front_up[1] += 1
+		tempxplus_back_up[1] += 1
+		tempxminus_front_up[1] += 1
+		tempxminus_back_up[1] += 1
+		temp_down = temp
+		tempxplus_down =  tempxplus
+		tempxminus_down =  tempxminus
+		tempxplus_front_down =  tempxplus_front
+		tempxplus_back_down =  tempxplus_back
+		tempxminus_front_down =  tempxminus_front
+		tempxminus_back_down =  tempxminus_back
+		temp_down[1] -= 1
+		tempxplus_down[1] -= 1
+		tempxminus_down[1] -= 1
+		tempxplus_front_down[1] -= 1
+		tempxplus_back_down[1] -= 1
+		tempxminus_front_down[1] -= 1
+		tempxminus_back_down[1] -= 1
+
+		mask.append([tuple(temp),tuple(tempxplus),tuple(tempxplus_front),tuple(temp_front),tuple(temp_up),tuple(tempxplus_up),tuple(tempxplus_front_up),tuple(temp_front_up)])
+		mask.append([tuple(temp),tuple(tempxplus),tuple(tempxplus_front),tuple(temp_front),tuple(temp_down),tuple(tempxplus_down),tuple(tempxplus_front_down),tuple(temp_front_down)])
+		mask.append([tuple(temp),tuple(tempxplus),tuple(tempxplus_back),tuple(temp_back),tuple(temp_up),tuple(tempxplus_up),tuple(tempxplus_back_up),tuple(temp_back_up)])
+		mask.append([tuple(temp),tuple(tempxplus),tuple(tempxplus_back),tuple(temp_back),tuple(temp_down),tuple(tempxplus_down),tuple(tempxplus_back_down),tuple(temp_back_down)])
+		mask.append([tuple(temp),tuple(tempxminus),tuple(tempxminus_front),tuple(temp_front),tuple(temp_up),tuple(tempxminus_up),tuple(tempxminus_front_up),tuple(temp_front_up)])
+		mask.append([tuple(temp),tuple(tempxminus),tuple(tempxminus_front),tuple(temp_front),tuple(temp_down),tuple(tempxminus_down),tuple(tempxminus_front_down),tuple(temp_front_down)])
+		mask.append([tuple(temp),tuple(tempxminus),tuple(tempxminus_back),tuple(temp_back),tuple(temp_up),tuple(tempxminus_up),tuple(tempxminus_back_up),tuple(temp_back_up)])
+		mask.append([tuple(temp),tuple(tempxminus),tuple(tempxminus_back),tuple(temp_back),tuple(temp_down),tuple(tempxminus_down),tuple(tempxminus_back_down),tuple(temp_back_down)])
+
+	def getNeighboursForGivenVoxel(self, centre, voxelCentreList, edgeLength = 1):
+		listOfAdjacentVoxels = self.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
+		final_list = []
+		final_list = list(set(final_list).union(set(listOfAdjacentVoxels[0])))
+		final_list = list(set(final_list).union(set(listOfAdjacentVoxels[1])))
+		final_list = list(set(final_list).union(set(listOfAdjacentVoxels[2])))
+		return final_list
 	def findAllAdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
 
 		listOf2AdjacentVoxels = self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
@@ -128,6 +399,16 @@ class Utils():
 
 		return listOf0AdjacentVoxels
 
+	def extractEssential(self):
+		pass
+
+	def isRegular():
+		pass
+
+	def isCritical():
+		pass
+
+	def
 	# Given two voxel centres, find if they are 2-adjacent or not.
 	def is2Adjacent(self, centre1, centre2, edgeLength):
 

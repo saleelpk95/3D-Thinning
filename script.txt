@@ -1,0 +1,8 @@
+from utils import Utils
+util = Utils()
+voxelCentreList = [(0,0,0), (0,1,0)]
+centre = (0,0,0)
+cliqueVoxelCentreList = [(0,0,0),(0,1,0)]
+util.findAllCliquesForComplex(voxelCentreList, 1)
+util.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, 1)
+util.findKStarForClique(cliqueVoxelCentreList, voxelCentreList, 1)
