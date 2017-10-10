@@ -32,6 +32,22 @@ class Utils():
 	# 	cliqueList = [clique for clique in powerSet if self.isConnected(clique, edgeLength)]
 	# 	return cliqueList
 
+	def isZeroSurface(self, voxelCentreList):
+		if not len(voxelCentreList)==2:
+			return False
+		if self.isConnected(voxelCentreList):
+			return False
+
+		return True
+
+	def isOneSurface(self, voxelCentreList):
+		if not self.isConnected(voxelCentreList):
+			return False
+		for voxel in voxelCentreList:
+			if not self.isZeroSurface(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)):
+				return False
+		return True
+
 	def isCritical(self, cliqueVoxelCentreList, voxelCentreList):
 		isRegular = self.isReducible(self.findKStarForClique(cliqueVoxelCentreList, voxelCentreList))
 		if not isRegular:
@@ -463,7 +479,7 @@ class Utils():
 		return (edgeLength/2.0)*np.sqrt(3.0)
 
 	# Check if the given complex is connected or not
-	def isConnected(self, voxelCentreList, edgeLength):
+	def isConnected(self, voxelCentreList, edgeLength=1):
 		if len(voxelCentreList) == 1:
 			return True
 
