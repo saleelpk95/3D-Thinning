@@ -6,3 +6,10 @@ cliqueVoxelCentreList = [(0,0,0),(0,1,0)]
 util.findAllCliquesForComplex(voxelCentreList, 1)
 util.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, 1)
 util.findKStarForClique(cliqueVoxelCentreList, voxelCentreList, 1)
+
+
+from utils import *
+from algo import *
+algo = Algorithms()
+complex = [(0,0,0),(0,1,0,),(1,2,-1),(2,2,-1),(2,1,-1),(2,0,-1),(2,0,0),(2,1,0)]
+algo.crucial_isthmus(complex,[],3)

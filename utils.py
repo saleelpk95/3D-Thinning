@@ -31,6 +31,13 @@ class Utils():
 	# 	powerSet.remove([])
 	# 	cliqueList = [clique for clique in powerSet if self.isConnected(clique, edgeLength)]
 	# 	return cliqueList
+	def getSimpleVoxels(self, voxelCentreList):
+		simple_voxels = []
+		for voxel in voxelCentreList:
+			if self.isReducible(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)):
+				simple_voxels.append(voxel)
+
+		return simple_voxels
 
 	def isZeroSurface(self, voxelCentreList):
 		if not len(voxelCentreList)==2:
@@ -59,23 +66,39 @@ class Utils():
 			return True
 		for voxel in voxelCentreList:
 			temp = list(voxelCentreList)
-			return self.isReducible(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)) and self.isReducible(temp.remove(voxel))
+			temp.remove(voxel)
+			if self.isReducible(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)) and self.isReducible(temp):
+				return True
+		return False
 
-	def getKCriticalCliques(voxelCentreList, k):
+	def getKCriticalCliques(self, voxelCentreList, k):
 		essentialCliques = self.findEssentialCliquesForComplex(voxelCentreList)
-		if k == 1:
-			k_critical_cliques = essentialCliques
-		if k == 2:
-			k_critical_cliques = essentialCliques
-		if k == 3:
-			k_critical_cliques = essentialCliques
+		simple_voxels = self.getSimpleVoxels(voxelCentreList)
+		k_critical_cliques = []
+
+		for clique in essentialCliques:
+			temp = list(clique)
+			for voxel in temp:
+				if voxel in simple_voxels:
+					temp.remove(voxel)
+
+			if k == 1:
+				if self.isZeroSurface(temp):
+					k_critical_cliques.append(clique)
+			if k == 2:
+				if self.isOneSurface(temp):
+					k_critical_cliques.append(clique)
+			if k == 3:
+				if self.isZeroSurface(temp) or self.isOneSurface(temp):
+					k_critical_cliques.append(clique)
 		return k_critical_cliques
 
 	def findCriticalCliques(self, voxelCentreList):
 		essentialCliques = self.findEssentialCliquesForComplex(voxelCentreList)
-		zero_cliques = list(essentialCliques[0])
-		one_cliques = list(essentialCliques[1])
-		two_cliques = list(essentialCliques[2])
+		print "essentialCliques",essentialCliques
+		zero_cliques = list(essentialCliques['zero_cliques'])
+		one_cliques = list(essentialCliques['one_cliques'])
+		two_cliques = list(essentialCliques['two_cliques'])
 		for clique in zero_cliques:
 			if not self.isCritical(clique, voxelCentreList):
 				zero_cliques.remove(clique)
@@ -101,25 +124,25 @@ class Utils():
 		three_cliques = []
 		for centre in voxelCentreList:
 			# add voxel as it is three clique
-			list(set(three_cliques).union(set([centre])))
+			three_cliques = list(set(three_cliques).union(set([centre])))
 			
 			# check for two cliques
 			for mask in self.maskFor2clique(centre):
 				common = list(set(mask).intersection(set(voxelCentreList)))
 				if len(common)==2:
-					list(set(two_cliques).union(set(common)))
+					two_cliques = list(set(two_cliques).union(set(common)))
 
 			# check for one cliques
 			for mask in self.maskFor1clique(centre):
 				common = list(set(mask).intersection(set(voxelCentreList)))
 				if len(common)>2:
-					list(set(one_cliques).union(set(common)))
+					one_cliques = list(set(one_cliques).union(set(common)))
 
 			# check for zero cliques
 			for mask in self.maskFor0clique(centre):
 				common = list(set(mask).intersection(set(voxelCentreList)))
 				if len(common)>4:
-					list(set(zero_cliques).union(set(common)))
+					zero_cliques = list(set(zero_cliques).union(set(common)))
 		final_dict['three_cliques'] = three_cliques
 		final_dict['two_cliques'] = two_cliques
 		final_dict['one_cliques'] = one_cliques
@@ -215,6 +238,7 @@ class Utils():
 				tempyplus = list(centre)
 				tempyplus[1] += 1
 				temp_front = temp
+				temp_back = temp
 				tempyplus_front = tempyplus
 				temp_front[2] += 1
 				tempyplus_front[2] += 1
@@ -336,6 +360,8 @@ class Utils():
 		mask.append([tuple(temp),tuple(tempxminus),tuple(tempxminus_back),tuple(temp_back),tuple(temp_up),tuple(tempxminus_up),tuple(tempxminus_back_up),tuple(temp_back_up)])
 		mask.append([tuple(temp),tuple(tempxminus),tuple(tempxminus_back),tuple(temp_back),tuple(temp_down),tuple(tempxminus_down),tuple(tempxminus_back_down),tuple(temp_back_down)])
 
+		return mask
+
 	def getNeighboursForGivenVoxel(self, centre, voxelCentreList, edgeLength = 1):
 		listOfAdjacentVoxels = self.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
 		final_list = []
@@ -415,16 +441,15 @@ class Utils():
 
 		return listOf0AdjacentVoxels
 
-	def extractEssential(self):
-		pass
+	# def extractEssential(self):
+	# 	pass
 
-	def isRegular():
-		pass
+	# def isRegular():
+	# 	pass
 
-	def isCritical():
-		pass
+	# def isCritical():
+	# 	pass
 
-	def
 	# Given two voxel centres, find if they are 2-adjacent or not.
 	def is2Adjacent(self, centre1, centre2, edgeLength):
 
