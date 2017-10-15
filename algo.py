@@ -31,7 +31,7 @@ class Algorithms():
 
 			Y = list(set(Y).union(A))
 			Z = list(set(Z).union(B))
-
+		print "Y, z", Y,Z
 		return Y, Z
 
 	def isthmus_sym_thinning(self, X, k):
