@@ -1,13 +1,47 @@
 import numpy as np
 import itertools
+import json
 
 class Utils():
 	
 	def __init__(self):
 		self.supportVectorList = [[1,1,1], [-1,1,1], [-1,-1,1], [1,-1,1], [1,1,-1], [-1,1,-1], [-1,-1,-1], [1,-1,-1],]
+		self.essentialCliquesGlobal = {}
+
+		simple_voxels_set_json = open('simple_voxels_set.json')
+		simple_voxels_set_json_str = simple_voxels_set_json.read()
+		self.simple_voxels_set = eval(json.loads(simple_voxels_set_json_str)['data'])
+
+		isCritical_voxel_set_json = open('isCritical_voxel_set.json')
+		isCritical_voxel_set_json_str = isCritical_voxel_set_json.read()
+		self.isCritical_voxel_set = eval(json.loads(isCritical_voxel_set_json_str)['data'])
+
+		maskForAllNeighbours_set_json = open('maskForAllNeighbours_set.json')
+		maskForAllNeighbours_set_json_str = maskForAllNeighbours_set_json.read()
+		self.maskForAllNeighbours_set = eval(json.loads(maskForAllNeighbours_set_json_str)['data'])
+
+		isConnected_set_json = open('isConnected_set.json')
+		isConnected_set_json_str = isConnected_set_json.read()
+		self.isConnected_set = eval(json.loads(isConnected_set_json_str)['data'])
+
+		essentialCliques_set_json = open('essentialCliques_set.json')
+		essentialCliques_set_json_str = essentialCliques_set_json.read()
+		self.essentialCliques_set = eval(json.loads(essentialCliques_set_json_str)['data'])
+
+		criticalCliques_set_json = open('criticalCliques_set.json')
+		criticalCliques_set_json_str = criticalCliques_set_json.read()
+		self.criticalCliques_set = eval(json.loads(criticalCliques_set_json_str)['data'])
+
+		# isReducible_set_json = open('isReducible_set.json')
+		# isReducible_set_json_str = isReducible_set_json.read()
+		# self.isReducible_set = eval(json.loads(isReducible_set_json_str)['data'])
+
+		kCriticalCliques_set_json = open('kCriticalCliques_set.json')
+		kCriticalCliques_set_json_str = kCriticalCliques_set_json.read()
+		self.kCriticalCliques_set = eval(json.loads(kCriticalCliques_set_json_str)['data'])
 
 	# Given a list of centres as tuples, generate the vertices for all the voxels.
-	def generateVerticesForCentres(self, voxelCentreList, edgeLength):
+	def generateVerticesForCentres(self, voxelCentreList, edgeLength=1):
 
 		vertexListForAllCentres = []
 
@@ -25,20 +59,74 @@ class Utils():
 
 			vertexListForAllCentres.append(vertexListForOneCentre)
 
-		print vertexListForAllCentres
+		return vertexListForAllCentres
 
 	# def findAllCliquesForComplex(self, voxelCentreList, edgeLength):
 	# 	powerSet = self.generatePowerSet(voxelCentreList)
 	# 	powerSet.remove([])
 	# 	cliqueList = [clique for clique in powerSet if self.isConnected(clique, edgeLength)]
 	# 	return cliqueList
+
+	def updateAllLookupFiles(self):
+		f = open('simple_voxels_set.json', "w")
+		data = json.dumps({'data':str(self.simple_voxels_set)})
+		f.write(data)
+		f.close()
+
+		f = open('isCritical_voxel_set.json', "w")
+		data = json.dumps({'data':str(self.isCritical_voxel_set)})
+		f.write(data)
+		f.close()
+
+		# f = open('isReducible_set.json', "w")
+		# data = json.dumps({'data':str(self.isReducible_set)})
+		# f.write(data)
+		# f.close()
+
+		f = open('kCriticalCliques_set.json', "w")
+		data = json.dumps({'data':str(self.kCriticalCliques_set)})
+		f.write(data)
+		f.close()
+
+		f = open('criticalCliques_set.json', "w")
+		data = json.dumps({'data':str(self.criticalCliques_set)})
+		f.write(data)
+		f.close()
+
+		f = open('essentialCliques_set.json', "w")
+		data = json.dumps({'data':str(self.essentialCliques_set)})
+		f.write(data)
+		f.close()
+
+		f = open('maskForAllNeighbours_set.json', "w")
+		data = json.dumps({'data':str(self.maskForAllNeighbours_set)})
+		f.write(data)
+		f.close()
+
+		f = open('isConnected_set.json', "w")
+		data = json.dumps({'data':str(self.isConnected_set)})
+		f.write(data)
+		f.close()
+
 	def getSimpleVoxels(self, voxelCentreList):
+		# print "complex", voxelCentreList
+		print "entering getSimpleVoxels"
+		if frozenset(voxelCentreList) in self.simple_voxels_set:
+			print "leaving getSimpleVoxels"
+			return self.simple_voxels_set[frozenset(voxelCentreList)]
 		simple_voxels = []
 		for voxel in voxelCentreList:
-			if self.isReducible(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)):
+			temp = list(voxelCentreList)
+			if self.isReducible(self.getNeighboursForGivenVoxel(voxel, temp)):
 				simple_voxels.append(voxel)
 		simple_voxels.sort()
 		simple_voxels = list(simple_voxels for simple_voxels,_ in itertools.groupby(simple_voxels))
+		self.simple_voxels_set[frozenset(voxelCentreList)] = simple_voxels
+		# f = open('simple_voxels_set.json', "w")
+		# data = json.dumps({'data':str(simple_voxels)})
+		# f.write(data)
+		# f.close()
+		print "leaving getSimpleVoxels"
 		return simple_voxels
 
 	def isZeroSurface(self, voxelCentreList):
@@ -51,7 +139,7 @@ class Utils():
 
 	def isOneSurface(self, voxelCentreList):
 		
-		if not self.isConnected(voxelCentreList):
+		if not self.isConnected(voxelCentreList) or len(voxelCentreList)==0:
 			return False
 		for voxel in voxelCentreList:
 			if not self.isZeroSurface(self.getNeighboursForGivenVoxel(voxel, voxelCentreList)):
@@ -59,58 +147,116 @@ class Utils():
 		return True
 
 	def isCritical(self, cliqueVoxelCentreList, voxelCentreList):
-		
+		print "entering isCritical"
+		if frozenset(voxelCentreList) in self.isCritical_voxel_set:
+			if frozenset(cliqueVoxelCentreList) in self.isCritical_voxel_set[frozenset(voxelCentreList)]:
+				print "leaving isCritical"
+				return self.isCritical_voxel_set[frozenset(voxelCentreList)][frozenset(cliqueVoxelCentreList)]
+		else:
+			self.isCritical_voxel_set[frozenset(voxelCentreList)] = {}
 		isRegular = self.isReducible(self.findKStarForClique(cliqueVoxelCentreList, voxelCentreList))
 		if not isRegular:
+			print "leaving isCritical"
+			self.isCritical_voxel_set[frozenset(voxelCentreList)][frozenset(cliqueVoxelCentreList)] = True
+			# f = open('isCritical_voxel_set.json', "w")
+			# data = json.dumps({'data':str(self.isCritical_voxel_set)})
+			# f.write(data)
+			# f.close()
 			return True
+		print "leaving isCritical"
+		self.isCritical_voxel_set[frozenset(voxelCentreList)][frozenset(cliqueVoxelCentreList)] = False
+		# f = open('isCritical_voxel_set.json', "w")
+		# data = json.dumps({'data':str(self.isCritical_voxel_set)})
+		# f.write(data)
+		# f.close()
 		return False
 
 	def isReducible(self, voxelCentreList):
+		# if frozenset(voxelCentreList) in self.isReducible_set:
+		# 	return self.isReducible_set[frozenset(voxelCentreList)]
 		if len(voxelCentreList) == 1:
+			# self.isReducible_set[frozenset(voxelCentreList)] = True
+			# f = open('isReducible_set.json', "w")
+			# data = json.dumps({'data':str(self.isReducible_set)})
+			# f.write(data)
+			# f.close()
 			return True
 		for voxel in voxelCentreList:
-			print "voxel in isReducible", voxel
+			# print "voxel in isReducible", voxel
 			temp = list(voxelCentreList)
 			temp.remove(voxel)
 			isNeighboursReducible = self.isReducible(self.getNeighboursForGivenVoxel(voxel, voxelCentreList))
 			isOthersReducible = self.isReducible(temp)
-			print "isNeighboursReducible",isNeighboursReducible, "isOthersReducible",isOthersReducible
+			# print "isNeighboursReducible",isNeighboursReducible, "isOthersReducible",isOthersReducible
 			if isNeighboursReducible and isOthersReducible:
+				# self.isReducible_set[frozenset(voxelCentreList)] = True
+				# f = open('isReducible_set.json', "w")
+				# data = json.dumps({'data':str(self.isReducible_set)})
+				# f.write(data)
+				# f.close()
 				return True
+			# self.isReducible_set[frozenset(voxelCentreList)] = False
+			# f = open('isReducible_set.json', "w")
+			# data = json.dumps({'data':str(self.isReducible_set)})
+			# f.write(data)
+			# f.close()
 		return False
 
 	def getKCriticalCliques(self, voxelCentreList, k):
-		essentialCliques = self.findEssentialCliquesForComplex(voxelCentreList)
-		# simple_voxels = self.getSimpleVoxels(voxelCentreList)
-		simple_voxels = [(0,0,0),(2,0,-1)]
-		print "simple_voxels", simple_voxels
+		print "entering getKCriticalCliques"
+		if frozenset( [frozenset(voxelCentreList), k] ) in self.kCriticalCliques_set:
+			print "leaving getKCriticalCliques"
+			return self.kCriticalCliques_set[frozenset( [frozenset(voxelCentreList), k] )]
+		essentialCliques = self.findEssentialCliquesForComplex(list(voxelCentreList))
+		
+		simple_voxels = self.getSimpleVoxels(list(voxelCentreList))
+		# simple_voxels = [(0,0,0),(2,0,-1)]
+		# print "simple_voxels", simple_voxels
 		k_critical_cliques = []
 		cliques_combined = []
 		cliques_combined = list(essentialCliques['three_cliques']) + list(essentialCliques['two_cliques']) + list(essentialCliques['one_cliques']) + list(essentialCliques['zero_cliques'])
-		print 'cliques_combined', cliques_combined
+		# print 'cliques_combined', cliques_combined
 		for clique in cliques_combined:
 			
-			temp = list(clique)
+			# temp = list(clique)
+			temp = list(self.findKStarForClique(list(clique),list(voxelCentreList)))
+			print "kStar for clique",temp
 			for voxel in temp:
 				if voxel in simple_voxels:
 					temp.remove(voxel)
-
+			print "thinned complex for the clique, ",clique," is ", temp
 			if k == 1:
 				
 				if self.isZeroSurface(temp):
+					print "this clique is isReducible to isZeroSurface, ",clique," and reduced form is ",temp
 					k_critical_cliques.append(clique)
 			if k == 2:
 				
 				if self.isOneSurface(temp):
+					print "this clique is isReducible to isoneSurface, ",clique," and reduced form is ",temp
 					k_critical_cliques.append(clique)
 			if k == 3:
 				
 				if self.isZeroSurface(temp) or self.isOneSurface(temp):
+					print "this clique is isReducible to isZero or one Surface, ",clique," and reduced form is ",temp
 					k_critical_cliques.append(clique)
+		self.kCriticalCliques_set[frozenset( [frozenset(voxelCentreList), k] )] = k_critical_cliques
+		# f = open('kCriticalCliques_set.json', "w")
+		# data = json.dumps({'data':str(self.kCriticalCliques_set)})
+		# f.write(data)
+		# f.close()
+		print "leaving getKCriticalCliques"
 		return k_critical_cliques
 
 	def findCriticalCliques(self, voxelCentreList):
-		essentialCliques = self.findEssentialCliquesForComplex(voxelCentreList)
+		print "entering findCriticalCliques"
+		if frozenset(voxelCentreList) in self.criticalCliques_set:
+			print "leaving findCriticalCliques"
+			return self.criticalCliques_set[frozenset(voxelCentreList)]
+
+		essentialCliques = self.findEssentialCliquesForComplex(list(voxelCentreList))
+		
+		critical_cliques = essentialCliques
 		
 		zero_cliques = list(essentialCliques['zero_cliques'])
 		one_cliques = list(essentialCliques['one_cliques'])
@@ -124,14 +270,24 @@ class Utils():
 		for clique in two_cliques:
 			if not self.isCritical(clique, voxelCentreList):
 				two_cliques.remove(clique)
-		essentialCliques['two_cliques'] = two_cliques
-		essentialCliques['one_cliques'] = one_cliques
-		essentialCliques['zero_cliques'] = zero_cliques
+		critical_cliques['two_cliques'] = two_cliques
+		critical_cliques['one_cliques'] = one_cliques
+		critical_cliques['zero_cliques'] = zero_cliques
 
-		return essentialCliques
+		self.criticalCliques_set[frozenset(voxelCentreList)] = critical_cliques
+		# f = open('criticalCliques_set.json', "w")
+		# data = json.dumps({'data':str(self.criticalCliques_set)})
+		# f.write(data)
+		# f.close()
+
+		print "leaving findCriticalCliques"
+		return critical_cliques
 
 	def findEssentialCliquesForComplex(self, voxelCentreList):
-
+		print "entering findEssentialCliquesForComplex"
+		if frozenset(voxelCentreList) in self.essentialCliques_set:
+			print "leaving findEssentialCliquesForComplex"
+			return self.essentialCliques_set[frozenset(voxelCentreList)]
 		# contains the cliques according to d-values
 		final_dict = {}
 		zero_cliques = []
@@ -156,6 +312,10 @@ class Utils():
 				if len(common)>2:
 					# one_cliques = list(set(one_cliques).union(set(common)))
 					one_cliques.append(common)
+				elif len(common)>1:
+					if common not in two_cliques:
+						one_cliques.append(common)
+
 
 			# check for zero cliques
 			for mask in self.maskFor0clique(centre):
@@ -163,6 +323,10 @@ class Utils():
 				if len(common)>4:
 					# zero_cliques = list(set(zero_cliques).union(set(common)))
 					zero_cliques.append(common)
+				elif len(common)>1:
+					if (common not in two_cliques) and (common not in one_cliques):
+						zero_cliques.append(common)
+					
 		three_cliques.sort()
 		three_cliques = list(three_cliques for three_cliques,_ in itertools.groupby(three_cliques))
 		two_cliques.sort()
@@ -175,7 +339,12 @@ class Utils():
 		final_dict['two_cliques'] = two_cliques
 		final_dict['one_cliques'] = one_cliques
 		final_dict['zero_cliques'] = zero_cliques
-		
+		self.essentialCliques_set[frozenset(voxelCentreList)] = final_dict
+		# f = open('essentialCliques_set.json', "w")
+		# data = json.dumps({'data':str(self.essentialCliques_set)})
+		# f.write(data)
+		# f.close()
+		print "leaving findEssentialCliquesForComplex"
 		return final_dict
 
 	def findKStarForClique(self, cliqueVoxelCentreList, voxelCentreList, edgeLength = 1):
@@ -236,12 +405,12 @@ class Utils():
 				temp = list(centre)
 				tempxplus = list(centre)
 				tempxplus[0] += 1
-				temp_up = temp
-				tempxplus_up = tempxplus
+				temp_up = list(temp)
+				tempxplus_up = list(tempxplus)
 				temp_up[1] += 1
 				tempxplus_up[1] += 1
-				temp_down = temp
-				tempxplus_down = tempxplus
+				temp_down = list(temp)
+				tempxplus_down = list(tempxplus)
 				temp_down[1] -= 1
 				tempxplus_down[1] -= 1
 				mask.append([tuple(temp),tuple(tempxplus),tuple(temp_up),tuple(tempxplus_up)])
@@ -250,12 +419,12 @@ class Utils():
 				temp = list(centre)
 				tempxminus = list(centre)
 				tempxminus[0] -= 1
-				temp_up = temp
-				tempxminus_up = tempxminus
+				temp_up = list(temp)
+				tempxminus_up = list(tempxminus)
 				temp_up[1] += 1
 				tempxminus_up[1] += 1
-				temp_down = temp
-				tempxminus_down = tempxminus
+				temp_down = list(temp)
+				tempxminus_down = list(tempxminus)
 				temp_down[1] -= 1
 				tempxminus_down[1] -= 1
 				mask.append([tuple(temp),tuple(tempxminus),tuple(temp_up),tuple(tempxminus_up)])
@@ -266,13 +435,13 @@ class Utils():
 				temp = list(centre)
 				tempyplus = list(centre)
 				tempyplus[1] += 1
-				temp_front = temp
-				temp_back = temp
-				tempyplus_front = tempyplus
+				temp_front = list(temp)
+				temp_back = list(temp)
+				tempyplus_front = list(tempyplus)
 				temp_front[2] += 1
 				tempyplus_front[2] += 1
-				temp_down = temp
-				tempyplus_back = tempyplus
+				temp_down = list(temp)
+				tempyplus_back = list(tempyplus)
 				temp_back[2] -= 1
 				tempyplus_back[2] -= 1
 				mask.append([tuple(temp),tuple(tempyplus),tuple(temp_front),tuple(tempyplus_front)])
@@ -281,12 +450,12 @@ class Utils():
 				temp = list(centre)
 				tempyminus = list(centre)
 				tempyminus[1] -= 1
-				temp_front = temp
-				tempyminus_front = tempyminus
+				temp_front = list(temp)
+				tempyminus_front = list(tempyminus)
 				temp_front[2] += 1
 				tempyminus_front[2] += 1
-				temp_back = temp
-				tempyminus_back = tempyminus
+				temp_back = list(temp)
+				tempyminus_back = list(tempyminus)
 				temp_back[2] -= 1
 				tempyminus_back[2] -= 1
 				mask.append([tuple(temp),tuple(tempyminus),tuple(temp_front),tuple(tempyminus_front)])
@@ -297,12 +466,12 @@ class Utils():
 				temp = list(centre)
 				tempzplus = list(centre)
 				tempzplus[2] += 1
-				temp_up = temp
-				tempzplus_up = tempzplus
+				temp_up = list(temp)
+				tempzplus_up = list(tempzplus)
 				temp_up[1] += 1
 				tempzplus_up[1] += 1
-				temp_down = temp
-				tempzplus_down = tempzplus
+				temp_down = list(temp)
+				tempzplus_down = list(tempzplus)
 				temp_down[1] -= 1
 				tempzplus_down[1] -= 1
 				mask.append([tuple(temp),tuple(tempzplus),tuple(temp_up),tuple(tempzplus_up)])
@@ -311,12 +480,12 @@ class Utils():
 				temp = list(centre)
 				tempzminus = list(centre)
 				tempzminus[2] -= 1
-				temp_up = temp
-				tempzminus_up = tempzminus
+				temp_up = list(temp)
+				tempzminus_up = list(tempzminus)
 				temp_up[1] += 1
 				tempzminus_up[1] += 1
-				temp_down = temp
-				tempzminus_down = tempzminus
+				temp_down = list(temp)
+				tempzminus_down = list(tempzminus)
 				temp_down[1] -= 1
 				tempzminus_down[1] -= 1
 				mask.append([tuple(temp),tuple(tempzminus),tuple(temp_up),tuple(tempzminus_up)])
@@ -331,33 +500,33 @@ class Utils():
 		tempxplus[0] += 1
 		tempxminus = list(centre)
 		tempxminus[0] -= 1
-		temp_front = temp
-		temp_back = temp
+		temp_front = list(temp)
+		temp_back = list(temp)
 		temp_front[2] += 1
 		temp_back[2] -= 1
-		temp_front_up = temp_front
-		temp_back_up = temp_back
-		temp_front_down = temp_front
-		temp_back_down = temp_back
+		temp_front_up = list(temp_front)
+		temp_back_up = list(temp_back)
+		temp_front_down = list(temp_front)
+		temp_back_down = list(temp_back)
 		temp_front_up[1] += 1
 		temp_back_up[1] += 1
 		temp_front_down[1] -= 1
 		temp_back_down[1] -= 1
-		tempxplus_front = tempxplus
-		tempxplus_back = tempxplus
-		tempxminus_front = tempxminus
-		tempxminus_back = tempxminus
+		tempxplus_front = list(tempxplus)
+		tempxplus_back = list(tempxplus)
+		tempxminus_front = list(tempxminus)
+		tempxminus_back = list(tempxminus)
 		tempxplus_front[2] += 1
 		tempxplus_back[2] -= 1
 		tempxminus_front[2] += 1
 		tempxminus_back[2] -= 1
-		temp_up = temp
-		tempxplus_up = tempxplus
-		tempxminus_up = tempxminus
-		tempxplus_front_up = tempxplus_front
-		tempxplus_back_up = tempxplus_back
-		tempxminus_front_up = tempxminus_front
-		tempxminus_back_up = tempxminus_back
+		temp_up = list(temp)
+		tempxplus_up = list(tempxplus)
+		tempxminus_up = list(tempxminus)
+		tempxplus_front_up = list(tempxplus_front)
+		tempxplus_back_up = list(tempxplus_back)
+		tempxminus_front_up = list(tempxminus_front)
+		tempxminus_back_up = list(tempxminus_back)
 		temp_up[1] += 1
 		tempxplus_up[1] += 1
 		tempxminus_up[1] += 1
@@ -365,13 +534,13 @@ class Utils():
 		tempxplus_back_up[1] += 1
 		tempxminus_front_up[1] += 1
 		tempxminus_back_up[1] += 1
-		temp_down = temp
-		tempxplus_down =  tempxplus
-		tempxminus_down =  tempxminus
-		tempxplus_front_down =  tempxplus_front
-		tempxplus_back_down =  tempxplus_back
-		tempxminus_front_down =  tempxminus_front
-		tempxminus_back_down =  tempxminus_back
+		temp_down = list(temp)
+		tempxplus_down =  list(tempxplus)
+		tempxminus_down =  list(tempxminus)
+		tempxplus_front_down =  list(tempxplus_front)
+		tempxplus_back_down =  list(tempxplus_back)
+		tempxminus_front_down =  list(tempxminus_front)
+		tempxminus_back_down =  list(tempxminus_back)
 		temp_down[1] -= 1
 		tempxplus_down[1] -= 1
 		tempxminus_down[1] -= 1
@@ -391,19 +560,92 @@ class Utils():
 
 		return mask
 
+	def maskForAllNeighbours(self,centre):
+		if centre in self.maskForAllNeighbours_set:
+			return self.maskForAllNeighbours_set[centre]
+		temp = list(centre)
+		tempxplus = list(centre)
+		tempxplus[0] += 1
+		tempxminus = list(centre)
+		tempxminus[0] -= 1
+		temp_front = list(temp)
+		temp_back = list(temp)
+		temp_front[2] += 1
+		temp_back[2] -= 1
+		temp_front_up = list(temp_front)
+		temp_back_up = list(temp_back)
+		temp_front_down = list(temp_front)
+		temp_back_down = list(temp_back)
+		temp_front_up[1] += 1
+		temp_back_up[1] += 1
+		temp_front_down[1] -= 1
+		temp_back_down[1] -= 1
+		tempxplus_front = list(tempxplus)
+		tempxplus_back = list(tempxplus)
+		tempxminus_front = list(tempxminus)
+		tempxminus_back = list(tempxminus)
+		tempxplus_front[2] += 1
+		tempxplus_back[2] -= 1
+		tempxminus_front[2] += 1
+		tempxminus_back[2] -= 1
+		temp_up = list(temp)
+		tempxplus_up = list(tempxplus)
+		tempxminus_up = list(tempxminus)
+		tempxplus_front_up = list(tempxplus_front)
+		tempxplus_back_up = list(tempxplus_back)
+		tempxminus_front_up = list(tempxminus_front)
+		tempxminus_back_up = list(tempxminus_back)
+		temp_up[1] += 1
+		tempxplus_up[1] += 1
+		tempxminus_up[1] += 1
+		tempxplus_front_up[1] += 1
+		tempxplus_back_up[1] += 1
+		tempxminus_front_up[1] += 1
+		tempxminus_back_up[1] += 1
+		temp_down = list(temp)
+		tempxplus_down =  list(tempxplus)
+		tempxminus_down =  list(tempxminus)
+		tempxplus_front_down =  list(tempxplus_front)
+		tempxplus_back_down =  list(tempxplus_back)
+		tempxminus_front_down =  list(tempxminus_front)
+		tempxminus_back_down =  list(tempxminus_back)
+		temp_down[1] -= 1
+		tempxplus_down[1] -= 1
+		tempxminus_down[1] -= 1
+		tempxplus_front_down[1] -= 1
+		tempxplus_back_down[1] -= 1
+		tempxminus_front_down[1] -= 1
+		tempxminus_back_down[1] -= 1
+
+		mask = [tuple(tempxplus), tuple(tempxminus), tuple(temp_front), tuple(temp_back), tuple(temp_front_up), tuple(temp_back_up), tuple(temp_front_down), tuple(temp_back_down), tuple(tempxplus_front), tuple(tempxplus_back), tuple(tempxminus_front), tuple(tempxminus_back), tuple(temp_up), tuple(tempxplus_up), tuple(tempxminus_up), tuple(tempxplus_front_up), tuple(tempxplus_back_up), tuple(tempxminus_front_up), tuple(tempxminus_back_up), tuple(temp_down), tuple(tempxplus_down), tuple(tempxminus_down), tuple(tempxplus_front_down), tuple(tempxplus_back_down), tuple(tempxminus_front_down), tuple(tempxminus_back_down)]
+		self.maskForAllNeighbours_set[centre] = mask
+		# f = open('maskForAllNeighbours_set.json', "w")
+		# data = json.dumps({'data':str(self.maskForAllNeighbours_set)})
+		# f.write(data)
+		# f.close()
+		return mask
+
+	# def getNeighboursForGivenVoxel(self, centre, voxelCentreList, edgeLength = 1):
+	# 	listOfAdjacentVoxels = self.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
+	# 	final_list = []
+	# 	final_list = list(set(final_list).union(set(listOfAdjacentVoxels[0])))
+	# 	final_list = list(set(final_list).union(set(listOfAdjacentVoxels[1])))
+	# 	final_list = list(set(final_list).union(set(listOfAdjacentVoxels[2])))
+	# 	return final_list
+
 	def getNeighboursForGivenVoxel(self, centre, voxelCentreList, edgeLength = 1):
-		listOfAdjacentVoxels = self.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
+		listOfAdjacentVoxels = self.maskForAllNeighbours(centre)
 		final_list = []
-		final_list = list(set(final_list).union(set(listOfAdjacentVoxels[0])))
-		final_list = list(set(final_list).union(set(listOfAdjacentVoxels[1])))
-		final_list = list(set(final_list).union(set(listOfAdjacentVoxels[2])))
+		final_list = list(set(voxelCentreList).intersection(set(listOfAdjacentVoxels)))
 		return final_list
+
 	def findAllAdjacentVoxelsForGivenVoxel(self, centre, voxelCentreList, edgeLength):
+		print "entering findAllAdjacentVoxelsForGivenVoxel"
 		# print "centre in findAllAdjacentVoxelsForGivenVoxel", centre
 		listOf2AdjacentVoxels = self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
 		listOf1AdjacentVoxels = self.findAll1AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
 		listOf0AdjacentVoxels = self.findAll0AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
-
+		print "leaving findAllAdjacentVoxelsForGivenVoxel"
 		return [listOf2AdjacentVoxels, listOf1AdjacentVoxels, listOf0AdjacentVoxels]
 
 	# Find all the voxels centres that are 2-adjacent to the the given voxel.
@@ -535,12 +777,37 @@ class Utils():
 		return (edgeLength/2.0)*np.sqrt(3.0)
 
 	# Check if the given complex is connected or not
+	# def isConnected(self, voxelCentreList, edgeLength=1):
+	# 	if len(voxelCentreList) == 1:
+	# 		return True
+	# 	for centre in voxelCentreList:
+	# 		if self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll1AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll0AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[]:
+	# 			return False
+	# 	return True
+
 	def isConnected(self, voxelCentreList, edgeLength=1):
+		if frozenset(voxelCentreList) in self.isConnected_set:
+			return self.isConnected_set[frozenset(voxelCentreList)]
 		if len(voxelCentreList) == 1:
+			self.isConnected_set[frozenset(voxelCentreList)] = True
+			# f = open('isConnected_set.json', "w")
+			# data = json.dumps({'data':str(self.isConnected_set)})
+			# f.write(data)
+			# f.close()
 			return True
 		for centre in voxelCentreList:
-			if self.findAll2AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll1AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[] and self.findAll0AdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)==[]:
+			if list(set(self.maskForAllNeighbours(centre)).intersection(set(voxelCentreList)))==[]:
+				self.isConnected_set[frozenset(voxelCentreList)] = False
+				# f = open('isConnected_set.json', "w")
+				# data = json.dumps({'data':str(self.isConnected_set)})
+				# f.write(data)
+				# f.close()
 				return False
+		self.isConnected_set[frozenset(voxelCentreList)] = True
+		# f = open('isConnected_set.json', "w")
+		# data = json.dumps({'data':str(self.isConnected_set)})
+		# f.write(data)
+		# f.close()
 		return True
 
 	def generatePowerSet(self, lst):
@@ -549,3 +816,27 @@ class Utils():
 	# Compare two floating point numbers for almost-equality
 	def isClose(self, a, b, rel_tol=1e-09, abs_tol=0.0):
 		return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+	def buildComplexFromPyFile(self, list):
+		voxelCentreList = []
+		for voxelDict in list:
+			voxelCentreList.append((voxelDict['x'],voxelDict['y'],voxelDict['z']))
+		print 'complex built: ', voxelCentreList	
+		return voxelCentreList
+
+
+	def tester(self, complex):
+		simple_voxels = self.getSimpleVoxels(list(complex))
+		for voxel in simple_voxels:
+			temp = list(complex)
+			temp.remove(voxel)
+			if self.isConnected(temp):
+				complex.remove(voxel)
+		return complex
+
+
+
+
+
+
+

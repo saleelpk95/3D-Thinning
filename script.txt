@@ -11,5 +11,55 @@ util.findKStarForClique(cliqueVoxelCentreList, voxelCentreList, 1)
 from utils import *
 from algo import *
 algo = Algorithms()
-complex = [(0,0,0),(0,1,0,),(1,2,-1),(2,2,-1),(2,1,-1),(2,0,-1),(2,0,0),(2,1,0)]
+complex = [(0,0,0),(0,1,0),(1,2,-1),(2,2,-1),(2,1,-1),(2,0,-1),(2,0,0),(2,1,0)]
 algo.crucial_isthmus(complex,[],3)
+algo.isthmus_sym_thinning(complex,1)
+
+
+//find essential cliques
+from utils import *
+from algo import *
+util = Utils()
+complex = [(0,0,0),(0,1,0),(1,2,-1),(2,2,-1),(2,1,-1),(2,0,-1),(2,0,0),(2,1,0)]
+util.findEssentialCliquesForComplex(complex)
+util.getSimpleVoxels(complex)
+
+from utils import *
+from algo import *
+from canstick import lookup
+util = Utils()
+algo = Algorithms()
+complex = util.buildComplexFromPyFile(lookup)
+algo.crucial_isthmus(complex,[],3)
+algo.isthmus_sym_thinning(complex,1)
+
+from utils import *
+from algo import *
+util = Utils()
+algo = Algorithms()
+complex = [(0,0,0),(0,1,0),(1,2,-1),(2,2,-1),(2,1,-1),(2,0,-1),(2,0,0),(2,1,0)]
+algo.isthmus_sym_thinning(complex,1)
+
+from utils import *
+from algo import *
+util = Utils()
+algo = Algorithms()
+complex = [(0,0,0),(0,1,0),(1,2,-1),(2,2,-1),(2,1,-1),(2,0,-1),(2,0,0),(2,1,0)]
+util.tester(complex)
+
+from plot import visualize
+from utils import *
+from algo import *
+util = Utils()
+complextest = [(0,0,0)]
+visualize(util.generateVerticesForCentres(complextest))
+
+from plot import plotComplex
+from canstick import lookup
+from utils import *
+from algo import *
+util = Utils()
+complex = util.buildComplexFromPyFile(lookup)
+thin=util.tester(complex)
+plotComplex(complex)
+plotComplex(thin)
