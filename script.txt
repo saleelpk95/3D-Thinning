@@ -26,12 +26,12 @@ util.getSimpleVoxels(complex)
 
 from utils import *
 from algo import *
-from canstick import lookup
+from canstick4 import lookup
 util = Utils()
 algo = Algorithms()
 complex = util.buildComplexFromPyFile(lookup)
-algo.crucial_isthmus(complex,[],3)
 algo.isthmus_sym_thinning(complex,1)
+algo.crucial_isthmus(complex,[],3)
 
 from utils import *
 from algo import *
@@ -60,6 +60,63 @@ from utils import *
 from algo import *
 util = Utils()
 complex = util.buildComplexFromPyFile(lookup)
-thin=util.tester(complex)
+thin=util.process_output(complex)
 plotComplex(complex)
 plotComplex(thin)
+
+from plot import *
+plot_tester()
+
+
+from plot import plotComplex
+from mug import lookup
+from utils import *
+from algo import *
+util = Utils()
+algo = Algorithms()
+complex = util.buildComplexFromPyFile(lookup)
+thin=algo.crucial_isthmus(complex,[],3)
+plotComplex(complex)
+plotComplex(thin)
+
+from utils import *
+util = Utils()
+complex = [(0,0,0)]
+util.generateVerticesForCentres(complex)
+
+from utils import *
+util = Utils()
+complex = [(0,0,0)]
+util.buildObjFile(util.generateCornerVertices(complex),'tester')
+
+from plot import plotComplex
+from mug import lookup
+from utils import *
+from algo import *
+util = Utils()
+complex = util.buildComplexFromPyFile(lookup)
+plotComplex(complex)
+util.buildObjFile(util.generateCornerVertices(complex),'mug-complex')
+thin=util.process_output(complex)
+plotComplex(thin)
+util.buildObjFile(util.generateCornerVertices(thin),'mug-skeleton')
+
+from plot import plotComplex
+from canstick import lookup
+from utils import *
+from algo import *
+util = Utils()
+complex = util.buildComplexFromPyFile(lookup)
+util.buildObjFile(util.generateCornerVertices(complex),'canstick-complex')
+plotComplex(complex)
+thin=util.process_output(complex)
+plotComplex(thin)
+util.buildObjFile(util.generateCornerVertices(thin),'canstick-skeleton')
+
+from torus import lookup
+from utils import *
+from algo import *
+util = Utils()
+algo = Algorithms()
+complex = util.buildComplexFromPyFile(lookup)
+algo.isthmus_sym_thinning(complex,1)

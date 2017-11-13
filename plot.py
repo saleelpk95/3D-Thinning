@@ -3,6 +3,7 @@ import time,os
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import product, combinations
 dict = {}
 
 def plotCubeAt(single_voxel_vertices,ax):
@@ -53,3 +54,18 @@ def plotComplex(complex):
 	path = './images/' + timestamp + '.png'
 	plt.savefig(path,dpi=200)
 	time.sleep(5)
+
+def plot_tester():
+
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+	ax.set_aspect("equal")
+
+	# draw cube
+	r = [-2, 5]
+	for s, e in combinations(np.array(list(product(r, r, r))), 2):
+		if np.sum(np.abs(s-e)) == r[1]-r[0]:
+			ax.plot3D(*zip(s, e), color="b")
+	plt.show()
+
+

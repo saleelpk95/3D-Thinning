@@ -6,7 +6,7 @@ class Utils():
 	
 	def __init__(self):
 		self.supportVectorList = [[1,1,1], [-1,1,1], [-1,-1,1], [1,-1,1], [1,1,-1], [-1,1,-1], [-1,-1,-1], [1,-1,-1],]
-		self.essentialCliquesGlobal = {}
+		self.complexGlobal = []
 
 		simple_voxels_set_json = open('simple_voxels_set.json')
 		simple_voxels_set_json_str = simple_voxels_set_json.read()
@@ -32,9 +32,9 @@ class Utils():
 		criticalCliques_set_json_str = criticalCliques_set_json.read()
 		self.criticalCliques_set = eval(json.loads(criticalCliques_set_json_str)['data'])
 
-		# isReducible_set_json = open('isReducible_set.json')
-		# isReducible_set_json_str = isReducible_set_json.read()
-		# self.isReducible_set = eval(json.loads(isReducible_set_json_str)['data'])
+		isReducible_set_json = open('isReducible_set.json')
+		isReducible_set_json_str = isReducible_set_json.read()
+		self.isReducible_set = eval(json.loads(isReducible_set_json_str)['data'])
 
 		kCriticalCliques_set_json = open('kCriticalCliques_set.json')
 		kCriticalCliques_set_json_str = kCriticalCliques_set_json.read()
@@ -61,6 +61,133 @@ class Utils():
 
 		return vertexListForAllCentres
 
+	def generateCornerVertices(self, voxelCentreList, edgeLength=1):
+
+		vertexListForAllCentres = []
+
+		for centre in voxelCentreList:
+		
+			vertexListForOneCentre = {}
+			vertexListForOneCentre['min'] = tuple(np.subtract(centre, (0.5, 0.5, 0.5)))
+			vertexListForOneCentre['max'] = tuple(np.add(centre, (0.5, 0.5, 0.5)))
+			
+
+			vertexListForAllCentres.append(vertexListForOneCentre)
+
+		return vertexListForAllCentres
+
+	def buildObjFile(self, voxelCentreList, filename):
+
+		s = 0
+		list_for_print_voxel = []
+		list_for_print_faces = []
+		for voxel in voxelCentreList:
+			print voxel
+
+			i = voxel[0]
+			j = voxel[1]
+			k = voxel[2]
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i,j,k)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i,j,k+1)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i,j+1,k)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i,j+1,k+1)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i+1,j,k)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i+1,j,k+1)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i+1,j+1,k)));
+			list_for_print_voxel.append( ("v %d %d %d\n" %(i+1,j+1,k+1)));
+			list_for_print_faces.append( ("f %ld %ld %ld %ld\n" %(s+8,s+4,s+2,s+6)));
+			list_for_print_faces.append( ("f %ld %ld %ld %ld\n" %(s+8,s+6,s+5,s+7)));
+			list_for_print_faces.append( ("f %ld %ld %ld %ld\n" %(s+8,s+7,s+3,s+4)));
+			list_for_print_faces.append( ("f %ld %ld %ld %ld\n" %(s+4,s+3,s+1,s+2)));
+			list_for_print_faces.append( ("f %ld %ld %ld %ld\n" %(s+1,s+3,s+7,s+5)));
+			list_for_print_faces.append( ("f %ld %ld %ld %ld\n" %(s+2,s+1,s+5,s+6)));
+			s+=8;
+
+		file = open('./visualize/'+filename+'.obj', 'w+')
+
+		file.write("#"+filename+'.obj')
+		file.write("\n")
+		file.write("g "+filename)
+		file.write("\n")
+		for vertex in list_for_print_voxel:
+			file.write("%s" % vertex)
+		file.write("\n")
+
+		for face in list_for_print_faces:
+			file.write("%s\n" % face)
+
+		file.close()
+
+	# def buildObjFile(self, voxelCentreList, filename):
+	# 	vertex_obj = []
+	# 	face_obj = []
+	# 	normal_obj = ["vn  1.0  0.0  0.0", "vn -1.0  0.0  0.0", "vn  0.0  1.0  0.0", "vn  0.0 -1.0  0.0", "vn  0.0  0.0  1.0", "vn  0.0  0.0 -1.0"]
+	# 	i = 1
+	# 	for voxel in voxelCentreList:
+	# 		vertex_1 = voxel['min']
+	# 		vertex_2 = tuple(np.add(vertex_1, (1, 0, 0)))
+	# 		vertex_3 = tuple(np.add(vertex_1, (0, 1, 0)))
+	# 		vertex_4 = tuple(np.add(vertex_1, (1, 1, 0)))
+	# 		vertex_5 = tuple(np.add(vertex_1, (0, 0, 1)))
+	# 		vertex_6 = tuple(np.add(vertex_1, (1, 0, 1)))
+	# 		vertex_7 = tuple(np.add(vertex_1, (0, 1, 1)))
+	# 		vertex_8 = voxel['max']
+
+	# 		vertex_obj.append("v " + str(vertex_1[0]) + " " + str(vertex_1[1]) + " " + str(vertex_1[2]))
+	# 		vertex_obj.append("v " + str(vertex_2[0]) + " " + str(vertex_2[1]) + " " + str(vertex_2[2]))
+	# 		vertex_obj.append("v " + str(vertex_3[0]) + " " + str(vertex_3[1]) + " " + str(vertex_3[2]))
+	# 		vertex_obj.append("v " + str(vertex_4[0]) + " " + str(vertex_4[1]) + " " + str(vertex_4[2]))
+	# 		vertex_obj.append("v " + str(vertex_5[0]) + " " + str(vertex_5[1]) + " " + str(vertex_5[2]))
+	# 		vertex_obj.append("v " + str(vertex_6[0]) + " " + str(vertex_6[1]) + " " + str(vertex_6[2]))
+	# 		vertex_obj.append("v " + str(vertex_7[0]) + " " + str(vertex_7[1]) + " " + str(vertex_7[2]))
+	# 		vertex_obj.append("v " + str(vertex_8[0]) + " " + str(vertex_8[1]) + " " + str(vertex_8[2]))
+
+	# 		face_1 = "f " + str(i) + "//" + str(6) + " " + str(i+1) + "//" + str(6) + " " + str(i+2) + "//" + str(6) 
+	# 		face_2 = "f " + str(i+1) + "//" + str(6) + " " + str(i+2) + "//" + str(6) + " " + str(i+3) + "//" + str(6)
+	# 		face_3 = "f " + str(i) + "//" + str(2) + " " + str(i+4) + "//" + str(2) + " " + str(i+2) + "//" + str(2)
+	# 		face_4 = "f " + str(i+2) + "//" + str(2) + " " + str(i+4) + "//" + str(2) + " " + str(i+6) + "//" + str(2)
+	# 		face_5 = "f " + str(i) + "//" + str(4) + " " + str(i+1) + "//" + str(4) + " " + str(i+4) + "//" + str(4)
+	# 		face_6 = "f " + str(i+1) + "//" + str(4) + " " + str(i+4) + "//" + str(4) + " " + str(i+5) + "//" + str(4)
+	# 		face_7 = "f " + str(i+7) + "//" + str(3) + " " + str(i+3) + "//" + str(3) + " " + str(i+6) + "//" + str(3) 
+	# 		face_8 = "f " + str(i+3) + "//" + str(3) + " " + str(i+6) + "//" + str(3) + " " + str(i+2) + "//" + str(3) 
+	# 		face_9 = "f " + str(i+7) + "//" + str(1) + " " + str(i+5) + "//" + str(1) + " " + str(i+1) + "//" + str(1) 
+	# 		face_10 = "f " + str(i+7) + "//" + str(1) + " " + str(i+1) + "//" + str(1) + " " + str(i+3) + "//" + str(1) 
+	# 		face_11 = "f " + str(i+7) + "//" + str(5) + " " + str(i+4) + "//" + str(5) + " " + str(i+5) + "//" + str(5) 
+	# 		face_12 = "f " + str(i+7) + "//" + str(5) + " " + str(i+4) + "//" + str(5) + " " + str(i+6) + "//" + str(5) 
+
+	# 		face_obj.append(face_1)
+	# 		face_obj.append(face_2)
+	# 		face_obj.append(face_3)
+	# 		face_obj.append(face_4)
+	# 		face_obj.append(face_5)
+	# 		face_obj.append(face_6)
+	# 		face_obj.append(face_7)
+	# 		face_obj.append(face_8)
+	# 		face_obj.append(face_9)
+	# 		face_obj.append(face_10)
+	# 		face_obj.append(face_11)
+	# 		face_obj.append(face_12)
+
+	# 		i += 8
+		# file = open('./visualize/'+filename+'.obj', 'w+')
+
+		# file.write("#"+filename+'.obj')
+		# file.write("\n")
+		# file.write("g "+filename)
+		# file.write("\n")
+		# for vertex in vertex_obj:
+		# 	file.write("%s\n" % vertex)
+		# file.write("\n")
+
+	# 	for normal in normal_obj:
+	# 		file.write("%s\n" % normal)
+	# 	file.write("\n")
+
+		# for face in face_obj:
+		# 	file.write("%s\n" % face)
+
+		# file.close()
+
 	# def findAllCliquesForComplex(self, voxelCentreList, edgeLength):
 	# 	powerSet = self.generatePowerSet(voxelCentreList)
 	# 	powerSet.remove([])
@@ -78,10 +205,10 @@ class Utils():
 		f.write(data)
 		f.close()
 
-		# f = open('isReducible_set.json', "w")
-		# data = json.dumps({'data':str(self.isReducible_set)})
-		# f.write(data)
-		# f.close()
+		f = open('isReducible_set.json', "w")
+		data = json.dumps({'data':str(self.isReducible_set)})
+		f.write(data)
+		f.close()
 
 		f = open('kCriticalCliques_set.json', "w")
 		data = json.dumps({'data':str(self.kCriticalCliques_set)})
@@ -108,6 +235,55 @@ class Utils():
 		f.write(data)
 		f.close()
 
+	def clearAllLookupFiles(self):
+		f = open('simple_voxels_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		f = open('isCritical_voxel_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		f = open('isReducible_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		f = open('kCriticalCliques_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		f = open('criticalCliques_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		f = open('essentialCliques_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		# f = open('maskForAllNeighbours_set.json', "w")
+		# data = json.dumps({'data':"{}"})
+		# f.write(data)
+		# f.close()
+
+		f = open('isConnected_set.json', "w")
+		data = json.dumps({'data':"{}"})
+		f.write(data)
+		f.close()
+
+		self.simple_voxels_set = {}
+		self.isCritical_voxel_set = {}
+		self.maskForAllNeighbours_set = {}
+		self.isConnected_set = {}
+		self.essentialCliques_set = {}
+		self.criticalCliques_set = {}
+		self.kCriticalCliques_set = {}
+
 	def getSimpleVoxels(self, voxelCentreList):
 		# print "complex", voxelCentreList
 		print "entering getSimpleVoxels"
@@ -127,6 +303,7 @@ class Utils():
 		# f.write(data)
 		# f.close()
 		print "leaving getSimpleVoxels"
+		print "simple_voxels",simple_voxels
 		return simple_voxels
 
 	def isZeroSurface(self, voxelCentreList):
@@ -172,10 +349,11 @@ class Utils():
 		return False
 
 	def isReducible(self, voxelCentreList):
-		# if frozenset(voxelCentreList) in self.isReducible_set:
-		# 	return self.isReducible_set[frozenset(voxelCentreList)]
+		if frozenset(voxelCentreList) in self.isReducible_set:
+			return self.isReducible_set[frozenset(voxelCentreList)]
+		print "isReducible voxelCentreList",voxelCentreList
 		if len(voxelCentreList) == 1:
-			# self.isReducible_set[frozenset(voxelCentreList)] = True
+			self.isReducible_set[frozenset(voxelCentreList)] = True
 			# f = open('isReducible_set.json', "w")
 			# data = json.dumps({'data':str(self.isReducible_set)})
 			# f.write(data)
@@ -189,13 +367,13 @@ class Utils():
 			isOthersReducible = self.isReducible(temp)
 			# print "isNeighboursReducible",isNeighboursReducible, "isOthersReducible",isOthersReducible
 			if isNeighboursReducible and isOthersReducible:
-				# self.isReducible_set[frozenset(voxelCentreList)] = True
+				self.isReducible_set[frozenset(voxelCentreList)] = True
 				# f = open('isReducible_set.json', "w")
 				# data = json.dumps({'data':str(self.isReducible_set)})
 				# f.write(data)
 				# f.close()
 				return True
-			# self.isReducible_set[frozenset(voxelCentreList)] = False
+			self.isReducible_set[frozenset(voxelCentreList)] = False
 			# f = open('isReducible_set.json', "w")
 			# data = json.dumps({'data':str(self.isReducible_set)})
 			# f.write(data)
@@ -220,8 +398,9 @@ class Utils():
 			
 			# temp = list(clique)
 			temp = list(self.findKStarForClique(list(clique),list(voxelCentreList)))
+			temp_for_removal = list(self.findKStarForClique(list(clique),list(voxelCentreList)))
 			print "kStar for clique",temp
-			for voxel in temp:
+			for voxel in temp_for_removal:
 				if voxel in simple_voxels:
 					temp.remove(voxel)
 			print "thinned complex for the clique, ",clique," is ", temp
@@ -255,21 +434,33 @@ class Utils():
 			return self.criticalCliques_set[frozenset(voxelCentreList)]
 
 		essentialCliques = self.findEssentialCliquesForComplex(list(voxelCentreList))
+		simple_voxels = self.getSimpleVoxels(list(voxelCentreList))
+		print "simple_voxels",simple_voxels
 		
 		critical_cliques = essentialCliques
 		
 		zero_cliques = list(essentialCliques['zero_cliques'])
 		one_cliques = list(essentialCliques['one_cliques'])
 		two_cliques = list(essentialCliques['two_cliques'])
-		for clique in zero_cliques:
+		three_cliques = list(essentialCliques['three_cliques'])
+		zero_cliques_temp = list(essentialCliques['zero_cliques'])
+		one_cliques_temp = list(essentialCliques['one_cliques'])
+		two_cliques_temp = list(essentialCliques['two_cliques'])
+		three_cliques_temp = list(essentialCliques['three_cliques'])
+		for clique in zero_cliques_temp:
 			if not self.isCritical(clique, voxelCentreList):
 				zero_cliques.remove(clique)
-		for clique in one_cliques:
+		for clique in one_cliques_temp:
 			if not self.isCritical(clique, voxelCentreList):
 				one_cliques.remove(clique)
-		for clique in two_cliques:
+		for clique in two_cliques_temp:
 			if not self.isCritical(clique, voxelCentreList):
 				two_cliques.remove(clique)
+		for clique in three_cliques_temp:
+			print "clique for three_cliques",clique
+			if clique[0] in simple_voxels:
+				three_cliques.remove(clique)
+		critical_cliques['three_cliques'] = three_cliques
 		critical_cliques['two_cliques'] = two_cliques
 		critical_cliques['one_cliques'] = one_cliques
 		critical_cliques['zero_cliques'] = zero_cliques
@@ -352,24 +543,26 @@ class Utils():
 		flag = True
 		# print "kstar", cliqueVoxelCentreList
 		for centre in cliqueVoxelCentreList:
+			# print "kStar centre",centre
 			voxelListForComparison = []
-			adjacentVoxels = self.findAllAdjacentVoxelsForGivenVoxel(centre, voxelCentreList, edgeLength)
-			
+			adjacentVoxels = self.getNeighboursForGivenVoxel(centre, voxelCentreList)
+			# print "kStar adjacentVoxels",adjacentVoxels
+			# print "kStar flag",flag
 			if flag:
 				flag = False
-				for voxelList in adjacentVoxels:
-					kStar += voxelList
+				# for voxels in adjacentVoxels:
+				kStar += adjacentVoxels
 			else:
-				for voxelList in adjacentVoxels:
-					voxelListForComparison += voxelList
-				kStar = list(set(kStar).intersection(voxelListForComparison))
+				# for voxels in adjacentVoxels:
+				voxelListForComparison += adjacentVoxels
+				kStar = list(set(kStar).intersection(set(voxelListForComparison)))
 
 		for centre in cliqueVoxelCentreList:
 			try:
 				kStar.remove(centre)
 			except:
 				pass
-
+		print "kStar for clique ",cliqueVoxelCentreList," is ", kStar
 		return kStar
 
 	def maskFor2clique(self, centre):
@@ -563,6 +756,7 @@ class Utils():
 	def maskForAllNeighbours(self,centre):
 		if centre in self.maskForAllNeighbours_set:
 			return self.maskForAllNeighbours_set[centre]
+		# print "centre",centre
 		temp = list(centre)
 		tempxplus = list(centre)
 		tempxplus[0] += 1
@@ -634,6 +828,7 @@ class Utils():
 	# 	return final_list
 
 	def getNeighboursForGivenVoxel(self, centre, voxelCentreList, edgeLength = 1):
+		# print "getNeighboursForGivenVoxel centre",centre
 		listOfAdjacentVoxels = self.maskForAllNeighbours(centre)
 		final_list = []
 		final_list = list(set(voxelCentreList).intersection(set(listOfAdjacentVoxels)))
@@ -720,6 +915,9 @@ class Utils():
 
 	# def isCritical():
 	# 	pass
+
+	def process_output(self, complex):
+		return self.processThinning(complex)
 
 	# Given two voxel centres, find if they are 2-adjacent or not.
 	def is2Adjacent(self, centre1, centre2, edgeLength):
@@ -825,7 +1023,7 @@ class Utils():
 		return voxelCentreList
 
 
-	def tester(self, complex):
+	def processThinning(self, complex):
 		simple_voxels = self.getSimpleVoxels(list(complex))
 		for voxel in simple_voxels:
 			temp = list(complex)
@@ -833,10 +1031,3 @@ class Utils():
 			if self.isConnected(temp):
 				complex.remove(voxel)
 		return complex
-
-
-
-
-
-
-
